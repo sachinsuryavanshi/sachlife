@@ -123,6 +123,13 @@ class SachlifePortfolioPageController extends ControllerBase {
     return $termArray;
   }
 
+  /**
+   * @param $nid
+   * Portfolio Methods return Array object $content
+   * portfolioPage Template render HTML for Portfolio page
+   * $nid is node id for Portfolio
+   * @return array
+   */
   public function portfolio($nid) {
     $contentNode = Node::load($nid);
     $content['title'] = $contentNode->getTitle();
