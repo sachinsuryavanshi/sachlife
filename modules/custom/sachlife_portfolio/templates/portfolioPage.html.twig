@@ -111,10 +111,10 @@
                   {% for keyPhoto in content.photographs %}
                     <div class="isotope-item sachlife">
                       <div class="album-single-item">
-                        <img class="asi-img" src="{{ file_url(keyPhoto.target_id) }}" alt="image">
+                        <img class="asi-img" src="{{ file_url(keyPhoto.target_id|image_style('portfolio_grid_thumbnail')) }}" alt="image">
                         <div class="asi-cover">
                           <a class="asi-link lg-trigger" href="{{ file_url(keyPhoto.target_id) }}"
-                             data-exthumbnail="{{ file_url(keyPhoto.target_id) }}"
+                             data-exthumbnail="{{ file_url(keyPhoto.target_id|image_style('photographs_thumbnail')) }}"
                              data-sub-html="<h4>{{ keyPhoto.title }}</h4>
                              <p>{{ keyPhoto.title }}</p>">
                             <div class="asi-info">
