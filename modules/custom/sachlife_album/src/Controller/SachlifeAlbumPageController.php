@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\sachlife_portfolio\Controller;
+namespace Drupal\sachlife_album\Controller;
 
 use \Drupal\Core\Controller\ControllerBase;
 use Drupal\file\Entity\File;
@@ -11,14 +11,14 @@ use Drupal\user\Entity\User;
 /**
  * Class SachlifePaintingPageController
  *
- * @package Drupal\sachlife_portfolio\Controller
+ * @package Drupal\sachlife_album\Controller
  */
-class SachlifePortfolioPageController extends ControllerBase {
+class SachlifeAlbumPageController extends ControllerBase {
 
-  public function portfolioList() {
+  public function albumList() {
     $query = \Drupal::database()->select('node_field_data', 'nfd');
     $query->fields('nfd', ['nid', 'title', 'created', 'uid']);
-    $query->condition('type', 'photographs');
+    $query->condition('type', 'photo_album');
     $content = $query->execute()->fetchAllAssoc('nid');
 
     $contentData = [];
@@ -35,8 +35,8 @@ class SachlifePortfolioPageController extends ControllerBase {
 
     //echo '<pre>';print_r($contentData);exit;
     $build = [];
-    $build['portfolio'] = [
-      '#theme' => 'portfoliothreegrid',
+    $build['albumList'] = [
+      '#theme' => 'albumStyleOne',
       '#content' => $contentData,
       '#categoryList' => $categoryList,
     ];
@@ -130,7 +130,7 @@ class SachlifePortfolioPageController extends ControllerBase {
    * $nid is node id for Portfolio
    * @return array
    */
-  public function portfolio($nid) {
+  public function album($nid) {
     $contentNode = Node::load($nid);
     $content['title'] = $contentNode->getTitle();
     $content['author'] = $this->getUserInfo($contentNode->get('uid')
@@ -146,14 +146,16 @@ class SachlifePortfolioPageController extends ControllerBase {
       ->getValue());
     $content['nodePrevNavigation'] = $this->nodePrevNavigation($nid);
     $content['nodeNextNavigation'] = $this->nodeNextNavigation($nid);
+    $content['imageCount'] = $this->getImageCount($nid);
 
     //echo '<pre>';
     //print_r($content);
+    //print_r($contentNode);
     //exit;
 
     $build = [];
-    $build['portfolioPage'] = [
-      '#theme' => 'portfolioPage',
+    $build['albumPage'] = [
+      '#theme' => 'albumPage',
       '#content' => $content,
     ];
     return $build;
@@ -211,7 +213,7 @@ class SachlifePortfolioPageController extends ControllerBase {
   private function nodePrevNavigation($nid) {
     $query1 = \Drupal::database()->select('node_field_data', 'nfd');
     $query1->fields('nfd', ['nid', 'title']);
-    $query1->condition('type', 'photographs');
+    $query1->condition('type', 'photo_album');
     $query1->condition('nid', $nid, '<');
     $query1->orderBy('nid', 'DESC');
     $query1->range(0, 1);
@@ -227,7 +229,7 @@ class SachlifePortfolioPageController extends ControllerBase {
   private function nodeNextNavigation($nid) {
     $query1 = \Drupal::database()->select('node_field_data', 'nfd');
     $query1->fields('nfd', ['nid', 'title']);
-    $query1->condition('type', 'photographs');
+    $query1->condition('type', 'photo_album');
     $query1->condition('nid', $nid, '>');
     $query1->orderBy('nid', 'ASC');
     $query1->range(0, 1);

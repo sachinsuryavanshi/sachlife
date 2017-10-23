@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\sachlife_portfolio\Controller;
+namespace Drupal\sachlife_paintings\Controller;
 
 use \Drupal\Core\Controller\ControllerBase;
 use Drupal\file\Entity\File;
@@ -11,14 +11,17 @@ use Drupal\user\Entity\User;
 /**
  * Class SachlifePaintingPageController
  *
- * @package Drupal\sachlife_portfolio\Controller
+ * @package Drupal\sachlife_paintings\Controller
  */
-class SachlifePortfolioPageController extends ControllerBase {
+class SachlifePaintingPageController extends ControllerBase {
 
-  public function portfolioList() {
+  /**
+   * @return array
+   */
+  public function paintingList() {
     $query = \Drupal::database()->select('node_field_data', 'nfd');
     $query->fields('nfd', ['nid', 'title', 'created', 'uid']);
-    $query->condition('type', 'photographs');
+    $query->condition('type', 'paintings');
     $content = $query->execute()->fetchAllAssoc('nid');
 
     $contentData = [];
@@ -26,17 +29,17 @@ class SachlifePortfolioPageController extends ControllerBase {
       $contentData[$key]['author'] = $this->getUserInfo($value->uid);
       $contentData[$key]['title'] = $value->title;
       $contentData[$key]['created'] = $value->created;
-      $contentData[$key]['coverPhoto'] = $this->getCoverPhotograph($key);
+      $contentData[$key]['coverPhoto'] = $this->getCoverPainting($key);
       $contentData[$key]['imageCount'] = $this->getImageCount($key);
       $contentData[$key]['category'] = $this->getCategory($key);
     }
 
     $categoryList = $this->getCategoryList();
-
     //echo '<pre>';print_r($contentData);exit;
+
     $build = [];
-    $build['portfolio'] = [
-      '#theme' => 'portfoliothreegrid',
+    $build['painting'] = [
+      '#theme' => 'paintingthreegrid',
       '#content' => $contentData,
       '#categoryList' => $categoryList,
     ];
@@ -59,9 +62,9 @@ class SachlifePortfolioPageController extends ControllerBase {
    *
    * @return mixed
    */
-  private function getCoverPhotograph($entityID) {
-    $query = \Drupal::database()->select('node__field_photographs', 'nfb');
-    $query->fields('nfb', ['field_photographs_target_id']);
+  private function getCoverPainting($entityID) {
+    $query = \Drupal::database()->select('node__field_paintings', 'nfb');
+    $query->fields('nfb', ['field_paintings_target_id']);
     $query->condition('entity_id', $entityID);
     $query->range(0, 1);
     $imageID = $query->execute()->fetchField();
@@ -75,7 +78,7 @@ class SachlifePortfolioPageController extends ControllerBase {
    * @return mixed
    */
   private function getImageCount($entityID) {
-    $query = \Drupal::database()->select('node__field_photographs', 'nfp');
+    $query = \Drupal::database()->select('node__field_paintings', 'nfp');
     $query->addExpression('COUNT(*)');
     $query->condition('entity_id', $entityID);
     $count = $query->execute()->fetchField();
@@ -128,10 +131,12 @@ class SachlifePortfolioPageController extends ControllerBase {
    * Portfolio Methods return Array object $content
    * portfolioPage Template render HTML for Portfolio page
    * $nid is node id for Portfolio
+   *
    * @return array
    */
-  public function portfolio($nid) {
+  public function painting($nid) {
     $contentNode = Node::load($nid);
+
     $content['title'] = $contentNode->getTitle();
     $content['author'] = $this->getUserInfo($contentNode->get('uid')
       ->getValue()[0]['target_id']);
@@ -140,20 +145,20 @@ class SachlifePortfolioPageController extends ControllerBase {
     $content['description'] = $contentNode->body->value;
     $content['category'] = $this->getCategoryName($contentNode->get('field_category_section')
       ->getValue());
-    $content['photographs'] = $this->getPhotographs($contentNode->get('field_photographs')
-      ->getValue());
-    $content['photographsTags'] = $this->getCategoryName($contentNode->get('field_photography_tags')
+    $content['painting'] = File::load($contentNode->get('field_paintings')->target_id)
+      ->getFileUri();
+    $content['paintingAlt'] = $contentNode->get('field_paintings')->alt;
+    $content['paintingTitle'] = $contentNode->get('field_paintings')->title;
+    $content['paintingTags'] = $this->getCategoryName($contentNode->get('field_photography_tags')
       ->getValue());
     $content['nodePrevNavigation'] = $this->nodePrevNavigation($nid);
     $content['nodeNextNavigation'] = $this->nodeNextNavigation($nid);
 
-    //echo '<pre>';
-    //print_r($content);
-    //exit;
+    //echo '<pre>';print_r($content);exit;
 
     $build = [];
-    $build['portfolioPage'] = [
-      '#theme' => 'portfolioPage',
+    $build['paintingPage'] = [
+      '#theme' => 'paintingPage',
       '#content' => $content,
     ];
     return $build;
@@ -186,32 +191,14 @@ class SachlifePortfolioPageController extends ControllerBase {
   }
 
   /**
-   * @param $getValue
-   *
-   * @return array
-   */
-  private function getPhotographs($getValue) {
-    $photographs = [];
-    if (is_array($getValue) || is_object($getValue)) {
-      foreach ($getValue as $key => $value) {
-        $photographs[$key]['title'] = $value['title'];
-        $photographs[$key]['alt'] = $value['alt'];
-        $photographs[$key]['target_id'] = File::load($value['target_id'])
-          ->getFileUri();
-      }
-    }
-    return $photographs;
-  }
-
-  /**
-   * @param $bid
+   * @param $nid
    *
    * @return mixed
    */
   private function nodePrevNavigation($nid) {
     $query1 = \Drupal::database()->select('node_field_data', 'nfd');
     $query1->fields('nfd', ['nid', 'title']);
-    $query1->condition('type', 'photographs');
+    $query1->condition('type', 'paintings');
     $query1->condition('nid', $nid, '<');
     $query1->orderBy('nid', 'DESC');
     $query1->range(0, 1);
@@ -220,20 +207,18 @@ class SachlifePortfolioPageController extends ControllerBase {
   }
 
   /**
-   * @param $bid
+   * @param $nid
    *
    * @return mixed
    */
   private function nodeNextNavigation($nid) {
     $query1 = \Drupal::database()->select('node_field_data', 'nfd');
     $query1->fields('nfd', ['nid', 'title']);
-    $query1->condition('type', 'photographs');
+    $query1->condition('type', 'paintings');
     $query1->condition('nid', $nid, '>');
     $query1->orderBy('nid', 'ASC');
     $query1->range(0, 1);
     $query = $query1->execute()->fetchAll();
     return $query;
   }
-
-
 }
